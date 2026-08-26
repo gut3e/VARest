@@ -1,0 +1,143 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "VARest - API de Estatísticas de Futebol",
+    "version": "1.0.0",
+    "description": "API RESTful para gestão de estatísticas de futebol, elencos, partidas e títulos."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Servidor Local de Desenvolvimento"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Verificar status da API",
+        "responses": {
+          "200": {
+            "description": "API está funcionando normalmente"
+          }
+        }
+      }
+    },
+    "/times": {
+      "get": {
+        "tags": ["Times"],
+        "summary": "Listar todos os times",
+        "responses": {
+          "200": {
+            "description": "Lista de times retornada com sucesso"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Times"],
+        "summary": "Cadastrar um novo time",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": { "type": "string", "example": "Flamengo" },
+                  "sigla": { "type": "string", "example": "FLA" },
+                  "estadio": { "type": "string", "example": "Maracanã" },
+                  "fundacao": { "type": "integer", "example": 1895 }
+                },
+                "required": ["nome", "sigla"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Time criado com sucesso"
+          }
+        }
+      }
+    },
+    "/jogadores": {
+      "get": {
+        "tags": ["Jogadores"],
+        "summary": "Listar jogadores",
+        "parameters": [
+          {
+            "name": "time_id",
+            "in": "query",
+            "schema": { "type": "integer" },
+            "description": "Filtrar por ID do time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de jogadores"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Jogadores"],
+        "summary": "Cadastrar jogador",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "time_id": { "type": "integer", "example": 1 },
+                  "nome": { "type": "string", "example": "Gabriel Barbosa" },
+                  "posicao": { "type": "string", "example": "Atacante" },
+                  "numero_camisa": { "type": "integer", "example": 9 },
+                  "nacionalidade": { "type": "string", "example": "Brasileiro" },
+                  "data_nascimento": { "type": "string", "format": "date", "example": "1996-08-30" }
+                },
+                "required": ["nome", "posicao"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Jogador criado"
+          }
+        }
+      }
+    },
+    "/partidas": {
+      "get": {
+        "tags": ["Partidas"],
+        "summary": "Listar partidas",
+        "responses": {
+          "200": {
+            "description": "Lista de partidas"
+          }
+        }
+      }
+    },
+    "/estatisticas/top-scorers": {
+      "get": {
+        "tags": ["Estatísticas"],
+        "summary": "Artilheiros do campeonato",
+        "responses": {
+          "200": {
+            "description": "Ranking de artilheiros"
+          }
+        }
+      }
+    },
+    "/estatisticas/overview": {
+      "get": {
+        "tags": ["Estatísticas"],
+        "summary": "Resumo geral dos dados",
+        "responses": {
+          "200": {
+            "description": "Totais de times, jogadores e partidas"
+          }
+        }
+      }
+    }
+  }
+}
