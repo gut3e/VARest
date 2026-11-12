@@ -1,4 +1,5 @@
 require('dotenv').config();
+const authRoutes= require("./routes/authRoutes");
 const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
@@ -29,7 +30,11 @@ app.get('/', (req, res) => {
   });
 });
 
+app.use('/api/auth',authRoutes);
+
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📑 Swagger Docs disponível em http://localhost:${PORT}/api/docs`);
 });
+
+
