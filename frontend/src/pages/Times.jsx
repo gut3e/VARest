@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Shield, Plus, Search, MapPin, Calendar, Users, X, Check, Trash2 } from 'lucide-react';
 
 export default function Times() {
-  const [times, setTimes] = useState([
-    { id: 1, nome: 'Flamengo', sigla: 'FLA', estadio: 'Maracanã', fundacao: 1895, atletas: 32, cor: '#b91c1c' },
-    { id: 2, nome: 'Palmeiras', sigla: 'PAL', estadio: 'Allianz Parque', fundacao: 1914, atletas: 29, cor: '#15803d' },
-    { id: 3, nome: 'São Paulo', sigla: 'SAO', estadio: 'Morumbi', fundacao: 1930, atletas: 30, cor: '#b91c1c' },
-    { id: 4, nome: 'Corinthians', sigla: 'COR', estadio: 'Neo Química Arena', fundacao: 1910, atletas: 28, cor: '#18181b' },
-    { id: 5, nome: 'Grêmio', sigla: 'GRE', estadio: 'Arena do Grêmio', fundacao: 1903, atletas: 27, cor: '#0284c7' },
-    { id: 6, nome: 'Atlético Mineiro', sigla: 'CAM', estadio: 'Arena MRV', fundacao: 1908, atletas: 31, cor: '#27272a' },
-  ]);
+  const [times, setTimes] = useState([]);
 
   const [busca, setBusca] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   const [novoTime, setNovoTime] = useState({
     nome: '',
     sigla: '',
@@ -26,23 +21,39 @@ export default function Times() {
     t.estadio.toLowerCase().includes(busca.toLowerCase())
   );
 
-  function handleSalvarTime(e) {
+  async function handleSalvarTime(e) {
     e.preventDefault();
     if (!novoTime.nome || !novoTime.sigla) return;
 
-    const novo = {
-      id: Date.now(),
-      nome: novoTime.nome,
-      sigla: novoTime.sigla.toUpperCase(),
-      estadio: novoTime.estadio || 'Não informado',
-      fundacao: parseInt(novoTime.fundacao, 10) || new Date().getFullYear(),
-      atletas: 0,
-      cor: '#059669',
-    };
+    setCarregando(true);
 
-    setTimes([novo, ...times]);
-    setNovoTime({ nome: '', sigla: '', estadio: '', fundacao: '' });
-    setModalAberto(false);
+    try {
+      await axios.post('http://localhost:3000/api/times', {
+        nome: novoTime.nome,
+        sigla: novoTime.sigla,
+        estadio: novoTime.estadio,
+        fundacao: Number(novoTime.fundacao) || new Date().getFullYear(),
+      });
+
+      const novo = {
+        id: Date.now(),
+        nome: novoTime.nome,
+        sigla: novoTime.sigla.toUpperCase(),
+        estadio: novoTime.estadio || 'Não informado',
+        fundacao: parseInt(novoTime.fundacao, 10) || new Date().getFullYear(),
+        atletas: 0,
+        cor: '#059669',
+      };
+
+      setTimes([novo, ...times]);
+      setNovoTime({ nome: '', sigla: '', estadio: '', fundacao: '' });
+      setModalAberto(false);
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.mensagem || 'Erro ao cadastrar time!');
+    } finally {
+      setCarregando(false);
+    }
   }
 
   function handleRemoverTime(id) {

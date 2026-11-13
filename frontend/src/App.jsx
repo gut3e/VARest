@@ -9,9 +9,26 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 export default function App() {
-  const [usuario, setUsuario] = useState(null);
+  const [usuario, setUsuario] = useState(() => {
+    try {
+      const salvo = localStorage.getItem('usuario_varest');
+      return salvo ? JSON.parse(salvo) : null;
+    } catch {
+      return null;
+    }
+  });
   const [telaAuth, setTelaAuth] = useState('login'); // 'login' ou 'register'
   const [abaAtiva, setAbaAtiva] = useState('dashboard');
+
+  function handleLoginSucesso(dados) {
+    localStorage.setItem('usuario_varest', JSON.stringify(dados));
+    setUsuario(dados);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('usuario_varest');
+    setUsuario(null);
+  }
 
   // Caso NÃO esteja logado: alterna entre Login e Cadastro
   if (!usuario) {
@@ -19,14 +36,14 @@ export default function App() {
       return (
         <Register
           onVoltarLogin={() => setTelaAuth('login')}
-          onLoginSucesso={(dados) => setUsuario(dados)}
+          onLoginSucesso={handleLoginSucesso}
         />
       );
     }
 
     return (
       <Login
-        onLoginSucesso={(dados) => setUsuario(dados)}
+        onLoginSucesso={handleLoginSucesso}
         onIrParaCadastro={() => setTelaAuth('register')}
       />
     );
@@ -47,7 +64,7 @@ export default function App() {
         abaAtiva={abaAtiva}
         setAbaAtiva={setAbaAtiva}
         usuario={usuario}
-        onLogout={() => setUsuario(null)}
+        onLogout={handleLogout}
       />
 
       {/* 2. Conteúdo Central Dinâmico */}
