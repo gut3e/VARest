@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
+import Dashboard from './pages/Dashboard';
 import Times from './pages/Times';
+import Jogadores from './pages/Jogadores';
+import Partidas from './pages/Partidas';
+import Titulos from './pages/Titulos';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
 export default function App() {
   const [usuario, setUsuario] = useState(null);
   const [telaAuth, setTelaAuth] = useState('login'); // 'login' ou 'register'
-  const [abaAtiva, setAbaAtiva] = useState('times');
+  const [abaAtiva, setAbaAtiva] = useState('dashboard');
 
-  // Se NÃO estiver logado: decide entre Login e Register
+  // Caso NÃO esteja logado: alterna entre Login e Cadastro
   if (!usuario) {
     if (telaAuth === 'register') {
       return (
@@ -28,50 +32,59 @@ export default function App() {
     );
   }
 
-  // Se ESTIVER logado: sistema completo
+  // Usuário autenticado
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#ffffff' }}>
-      {/* 1. Barra de Navegação */}
-      <Navbar abaAtiva={abaAtiva} setAbaAtiva={setAbaAtiva} />
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: 'var(--bg-main)',
+      }}
+    >
+      {/* 1. Barra de Navegação Tática */}
+      <Navbar
+        abaAtiva={abaAtiva}
+        setAbaAtiva={setAbaAtiva}
+        usuario={usuario}
+        onLogout={() => setUsuario(null)}
+      />
 
-      {/* 2. Conteúdo Dinâmico */}
+      {/* 2. Conteúdo Central Dinâmico */}
       <main
         style={{
           flex: 1,
-          padding: '2.5rem 2rem',
-          maxWidth: '1200px',
+          padding: '2.5rem 1.5rem',
+          maxWidth: '1280px',
           width: '100%',
           margin: '0 auto',
         }}
       >
-        {abaAtiva === 'times' && <Times />}
         {abaAtiva === 'dashboard' && (
-          <div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Painel Geral</h2>
-            <p style={{ color: '#6b7280' }}>
-              Olá, {usuario.nome}! Selecione a aba "Times" no topo para visualizar os clubes cadastrados.
-            </p>
-          </div>
+          <Dashboard onNavegar={(aba) => setAbaAtiva(aba)} usuario={usuario} />
         )}
-        {abaAtiva === 'jogadores' && (
-          <div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Jogadores</h2>
-            <p style={{ color: '#6b7280' }}>Em breve: jogadores disponíveis.</p>
-          </div>
-        )}
-        {abaAtiva === 'partidas' && (
-          <div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Partidas</h2>
-            <p style={{ color: '#6b7280' }}>Em breve: histórico e cadastro de partidas.</p>
-          </div>
-        )}
-        {abaAtiva === 'titulos' && (
-          <div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Títulos</h2>
-            <p style={{ color: '#6b7280' }}>Em breve: galeria de troféus.</p>
-          </div>
-        )}
+        {abaAtiva === 'times' && <Times />}
+        {abaAtiva === 'jogadores' && <Jogadores />}
+        {abaAtiva === 'partidas' && <Partidas />}
+        {abaAtiva === 'titulos' && <Titulos />}
       </main>
+
+      {/* 3. Rodapé Técnico */}
+      <footer
+        style={{
+          backgroundColor: '#ffffff',
+          borderTop: '1px solid var(--border-subtle)',
+          padding: '1.25rem 2rem',
+          textAlign: 'center',
+          fontSize: '0.8rem',
+          color: 'var(--text-tertiary)',
+        }}
+      >
+        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <span>⚽ VARest • RESTful Football Intelligence API</span>
+          <span>Sincronizado com PostgreSQL • Swagger UI ready</span>
+        </div>
+      </footer>
     </div>
   );
 }
