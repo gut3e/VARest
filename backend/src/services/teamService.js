@@ -6,7 +6,11 @@ async function criarTime(nome, sigla, estadio, fundacao){
         throw new Error('Time já cadastrado!');
     }
 
-    await teamRepository.inserirTime(nome, sigla, estadio, fundacao);
+    return await teamRepository.inserirTime(nome, sigla, estadio, fundacao);
 }
 
-module.exports = {criarTime};
+async function listarTimes() {
+    return await teamRepository.listarTodos();
+}
+
+module.exports = { criarTime, listarTimes };

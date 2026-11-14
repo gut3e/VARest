@@ -9,7 +9,8 @@ async function inserirTime(nome, sigla, estadio, fundacao) {
         `
     ;
 
-    await db.query(sql, [nome, sigla, estadio, fundacao]);
+    const result = await db.query(sql, [nome, sigla, estadio, fundacao]);
+    return result.rows[0];
 }
 
 async function buscarNomeOuSigla(nome, sigla) {
@@ -23,4 +24,10 @@ async function buscarNomeOuSigla(nome, sigla) {
     return result.rows[0];
 }
 
-module.exports = { inserirTime, buscarNomeOuSigla };
+async function listarTodos() {
+    const sql = `SELECT * FROM times ORDER BY id DESC`;
+    const result = await db.query(sql);
+    return result.rows;
+}
+
+module.exports = { inserirTime, buscarNomeOuSigla, listarTodos };

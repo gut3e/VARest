@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Shield, Plus, Search, MapPin, Calendar, Users, X, Check, Trash2 } from 'lucide-react';
 
@@ -15,6 +15,28 @@ export default function Times() {
     fundacao: '',
   });
 
+  useEffect(() => {
+    carregarTimes();
+  }, []);
+
+  async function carregarTimes() {
+    try {
+      const response = await axios.get('http://localhost:3000/api/times');
+      const formatados = response.data.map((t) => ({
+        id: t.id,
+        nome: t.nome,
+        sigla: t.sigla,
+        estadio: t.estadio || 'Não informado',
+        fundacao: t.fundacao || new Date().getFullYear(),
+        atletas: 0,
+        cor: '#059669',
+      }));
+      setTimes(formatados);
+    } catch (error) {
+      console.error('Erro ao carregar times:', error);
+    }
+  }
+
   const timesFiltrados = times.filter((t) =>
     t.nome.toLowerCase().includes(busca.toLowerCase()) ||
     t.sigla.toLowerCase().includes(busca.toLowerCase()) ||
@@ -28,15 +50,17 @@ export default function Times() {
     setCarregando(true);
 
     try {
-      await axios.post('http://localhost:3000/api/times', {
+      const response = await axios.post('http://localhost:3000/api/times', {
         nome: novoTime.nome,
         sigla: novoTime.sigla,
         estadio: novoTime.estadio,
         fundacao: Number(novoTime.fundacao) || new Date().getFullYear(),
       });
 
+      const cadastrado = response.data?.time;
+
       const novo = {
-        id: Date.now(),
+        id: cadastrado?.id || Date.now(),
         nome: novoTime.nome,
         sigla: novoTime.sigla.toUpperCase(),
         estadio: novoTime.estadio || 'Não informado',
