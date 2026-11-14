@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Shield, Users, Calendar, Trophy, TrendingUp, Activity, ArrowUpRight, Zap, Play } from 'lucide-react';
 
 export default function Dashboard({ onNavegar, usuario }) {
+  const [totalTimes, setTotalTimes] = useState(0);
+  const [totalJogadores, setTotalJogadores] = useState(0);
+
+  useEffect(() => {
+    async function carregarTotais() {
+      try {
+        const [resTimes, resJogadores] = await Promise.all([
+          axios.get('http://localhost:3000/api/times'),
+          axios.get('http://localhost:3000/api/players'),
+        ]);
+
+        setTotalTimes(resTimes.data.length);
+        setTotalJogadores(resJogadores.data.length);
+      } catch (error) {
+        console.error('Erro ao buscar totais do dashboard:', error);
+      }
+    }
+
+    carregarTotais();
+  }, []);
+
   const kpis = [
-    { label: 'Clubes Monitorados', valor: '20', delta: '+3 nesta janela', icon: Shield, tab: 'times' },
-    { label: 'Atletas no Radar', valor: '584', delta: '48 scoutings ativos', icon: Users, tab: 'jogadores' },
+    { label: 'Clubes Monitorados', valor: String(totalTimes), delta: `${totalTimes} cadastrados no banco`, icon: Shield, tab: 'times' },
+    { label: 'Atletas no Radar', valor: String(totalJogadores), delta: `${totalJogadores} scoutings ativos`, icon: Users, tab: 'jogadores' },
     { label: 'Confrontos Analisados', valor: '138', delta: '98.8% sem pendências', icon: Calendar, tab: 'partidas' },
     { label: 'Taças Registradas', valor: '42', delta: 'Histórico desde 1950', icon: Trophy, tab: 'titulos' },
   ];
@@ -12,13 +34,13 @@ export default function Dashboard({ onNavegar, usuario }) {
   const partidaDestaque = {
     rodada: 'Rodada 28 • Brasileirão',
     status: 'AO VIVO (74\')',
-    mandante: { nome: 'Flamengo', sigla: 'FLA', gols: 2, cor: '#dc2626' },
-    visitante: { nome: 'Palmeiras', sigla: 'PAL', gols: 1, cor: '#16a34a' },
+    mandante: { nome: 'Flamengo', sigla: 'FLA', gols: 0, cor: '#dc2626' },
+    visitante: { nome: 'Palmeiras', sigla: 'PAL', gols: 3, cor: '#16a34a' },
     estadio: 'Maracanã, Rio de Janeiro',
     gols: [
-      { minuto: "18'", autor: 'Pedro (FLA)' },
+      { minuto: "18'", autor: 'Gustavo Gomes (PAL)' },
       { minuto: "42'", autor: 'Raphael Veiga (PAL)' },
-      { minuto: "63'", autor: 'Arrascaeta (FLA)' },
+      { minuto: "63'", autor: 'Gabriel Menino (PAL)' },
     ],
   };
 

@@ -6,6 +6,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
 const teamRoutes = require("./routes/teamRoutes");
 const playerRoutes = require("./routes/playerRoutes");
+const matchRoutes = require("./routes/matchRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,8 @@ app.use('/api/auth',authRoutes);
 app.use ('/api/times', teamRoutes);
 
 app.use ('/api/players', playerRoutes);
+
+app.use('/api/matches', matchRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
