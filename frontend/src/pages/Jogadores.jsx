@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Users, Search, Plus, Filter, Shield, Award, X, Check } from 'lucide-react';
+import { Users, Search, Plus, Shield, X, Check, Edit2, Trash2 } from 'lucide-react';
 
 export default function Jogadores() {
   const [jogadores, setJogadores] = useState([]);
@@ -8,8 +8,9 @@ export default function Jogadores() {
   const [filtroPosicao, setFiltroPosicao] = useState('Todas');
   const [modalAberto, setModalAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
+  const [jogadorEmEdicao, setJogadorEmEdicao] = useState(null);
 
-  const [novoJogador, setNovoJogador] = useState({
+  const [formData, setFormData] = useState({
     nome: '',
     time_id: '',
     posicao: 'Atacante',
@@ -25,16 +26,26 @@ export default function Jogadores() {
   async function carregarJogadores() {
     try {
       const response = await axios.get('http://localhost:3000/api/players');
-      const formatados = response.data.map((j) => ({
-        id: j.id,
-        nome: j.nome,
-        posicao: j.posicao,
-        camisa: j.numero_camisa || '-',
-        nacionalidade: j.nacionalidade,
-        gols: 0,
-        assistencias: 0,
-        time: j.time_nome || (j.time_id ? `Clube #${j.time_id}` : 'Sem clube'),
-      }));
+      const formatados = response.data.map((j) => {
+        let dataFormatada = '';
+        if (j.data_nascimento) {
+          dataFormatada = new Date(j.data_nascimento).toISOString().split('T')[0];
+        }
+
+        return {
+          id: j.id,
+          nome: j.nome,
+          posicao: j.posicao,
+          camisa: j.numero_camisa || '-',
+          numero_camisa: j.numero_camisa || '',
+          nacionalidade: j.nacionalidade,
+          data_nascimento: dataFormatada,
+          time_id: j.time_id || '',
+          gols: 0,
+          assistencias: 0,
+          time: j.time_nome || (j.time_id ? `Clube #${j.time_id}` : 'Sem clube'),
+        };
+      });
       setJogadores(formatados);
     } catch (error) {
       console.error('Erro ao carregar atletas:', error);
@@ -66,65 +77,82 @@ export default function Jogadores() {
     }
   };
 
+  function abrirModalCriacao() {
+    setJogadorEmEdicao(null);
+    setFormData({
+      nome: '',
+      time_id: '',
+      posicao: 'Atacante',
+      numero_camisa: '',
+      nacionalidade: 'Brasil',
+      data_nascimento: '',
+    });
+    setModalAberto(true);
+  }
+
+  function abrirModalEdicao(jogador) {
+    setJogadorEmEdicao(jogador);
+    setFormData({
+      nome: jogador.nome,
+      time_id: jogador.time_id || '',
+      posicao: jogador.posicao,
+      numero_camisa: jogador.numero_camisa || '',
+      nacionalidade: jogador.nacionalidade,
+      data_nascimento: jogador.data_nascimento || '',
+    });
+    setModalAberto(true);
+  }
+
   async function handleSalvarJogador(e) {
     e.preventDefault();
-    if (!novoJogador.nome || !novoJogador.posicao || !novoJogador.nacionalidade || !novoJogador.data_nascimento) {
+    if (!formData.nome || !formData.posicao || !formData.nacionalidade || !formData.data_nascimento) {
       alert('Preencha os campos obrigatórios!');
       return;
     }
 
     setCarregando(true);
 
+    const payload = {
+      nome: formData.nome,
+      time_id: formData.time_id ? Number(formData.time_id) : null,
+      posicao: formData.posicao,
+      numero_camisa: formData.numero_camisa ? Number(formData.numero_camisa) : null,
+      nacionalidade: formData.nacionalidade,
+      data_nascimento: formData.data_nascimento,
+    };
+
     try {
-      const response = await axios.post('http://localhost:3000/api/players', {
-        nome: novoJogador.nome,
-        time_id: novoJogador.time_id ? Number(novoJogador.time_id) : null,
-        posicao: novoJogador.posicao,
-        numero_camisa: novoJogador.numero_camisa ? Number(novoJogador.numero_camisa) : null,
-        nacionalidade: novoJogador.nacionalidade,
-        data_nascimento: novoJogador.data_nascimento,
-      });
+      if (jogadorEmEdicao) {
+        // Atualização (PUT)
+        await axios.put(`http://localhost:3000/api/players/${jogadorEmEdicao.id}`, payload);
+        alert('Atleta atualizado com sucesso!');
+      } else {
+        // Criação (POST)
+        await axios.post('http://localhost:3000/api/players', payload);
+        alert('Atleta cadastrado com sucesso!');
+      }
 
-      const cadastrado = response.data?.jogador || {
-        id: Date.now(),
-        nome: novoJogador.nome,
-        posicao: novoJogador.posicao,
-        camisa: novoJogador.numero_camisa || 0,
-        nacionalidade: novoJogador.nacionalidade,
-        gols: 0,
-        assistencias: 0,
-        time: novoJogador.time_id ? `Clube #${novoJogador.time_id}` : 'Sem clube',
-      };
-
-      setJogadores([
-        {
-          id: cadastrado.id,
-          nome: cadastrado.nome,
-          posicao: cadastrado.posicao,
-          camisa: cadastrado.numero_camisa || cadastrado.camisa || '-',
-          nacionalidade: cadastrado.nacionalidade,
-          gols: 0,
-          assistencias: 0,
-          time: cadastrado.time_id ? `Clube #${cadastrado.time_id}` : 'Sem clube',
-        },
-        ...jogadores,
-      ]);
-
-      setNovoJogador({
-        nome: '',
-        time_id: '',
-        posicao: 'Atacante',
-        numero_camisa: '',
-        nacionalidade: 'Brasil',
-        data_nascimento: '',
-      });
-
+      await carregarJogadores();
       setModalAberto(false);
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.mensagem || 'Erro ao cadastrar atleta!');
+      alert(error.response?.data?.mensagem || 'Erro ao salvar atleta!');
     } finally {
       setCarregando(false);
+    }
+  }
+
+  async function handleExcluirJogador(jogador) {
+    const confirmou = window.confirm(`Deseja realmente excluir o atleta "${jogador.nome}"?`);
+    if (!confirmou) return;
+
+    try {
+      await axios.delete(`http://localhost:3000/api/players/${jogador.id}`);
+      setJogadores((prev) => prev.filter((j) => j.id !== jogador.id));
+      alert('Atleta excluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir atleta:', error);
+      alert(error.response?.data?.mensagem || 'Erro ao excluir atleta!');
     }
   }
 
@@ -157,7 +185,7 @@ export default function Jogadores() {
         </div>
 
         <button
-          onClick={() => setModalAberto(true)}
+          onClick={abrirModalCriacao}
           className="btn-emerald"
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
         >
@@ -258,6 +286,7 @@ export default function Jogadores() {
               <th style={{ padding: '1rem 1.25rem' }}>Nacionalidade</th>
               <th style={{ padding: '1rem 1.25rem', textAlign: 'center' }}>Gols</th>
               <th style={{ padding: '1rem 1.25rem', textAlign: 'center' }}>Assistências</th>
+              <th style={{ padding: '1rem 1.25rem', textAlign: 'center' }}>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -330,6 +359,62 @@ export default function Jogadores() {
                   <td style={{ padding: '1rem 1.25rem', textAlign: 'center', fontWeight: 700, color: 'var(--text-primary)' }}>
                     {j.assistencias}
                   </td>
+
+                  <td style={{ padding: '1rem 1.25rem', textAlign: 'center' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <button
+                        onClick={() => abrirModalEdicao(j)}
+                        title="Editar Atleta"
+                        style={{
+                          background: '#f3f6f4',
+                          border: '1px solid var(--border-subtle)',
+                          borderRadius: '6px',
+                          padding: '0.35rem 0.5rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: '#0369a1',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#e0f2fe';
+                          e.currentTarget.style.borderColor = '#bae6fd';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f3f6f4';
+                          e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                        }}
+                      >
+                        <Edit2 size={15} />
+                      </button>
+
+                      <button
+                        onClick={() => handleExcluirJogador(j)}
+                        title="Excluir Atleta"
+                        style={{
+                          background: '#f3f6f4',
+                          border: '1px solid var(--border-subtle)',
+                          borderRadius: '6px',
+                          padding: '0.35rem 0.5rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: '#b91c1c',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#fee2e2';
+                          e.currentTarget.style.borderColor = '#fecaca';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f3f6f4';
+                          e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                        }}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -351,7 +436,7 @@ export default function Jogadores() {
         )}
       </div>
 
-      {/* Modal de Criação de Jogador */}
+      {/* Modal de Criação / Edição de Jogador */}
       {modalAberto && (
         <div className="modal-overlay" onClick={() => setModalAberto(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -367,7 +452,9 @@ export default function Jogadores() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <Users size={20} color="#34d399" />
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>Cadastrar Novo Atleta</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>
+                  {jogadorEmEdicao ? `Editar Atleta #${jogadorEmEdicao.id}` : 'Cadastrar Novo Atleta'}
+                </h3>
               </div>
               <button
                 onClick={() => setModalAberto(false)}
@@ -390,8 +477,8 @@ export default function Jogadores() {
                   type="text"
                   required
                   placeholder="Ex: Neymar da Silva Santos Júnior"
-                  value={novoJogador.nome}
-                  onChange={(e) => setNovoJogador({ ...novoJogador, nome: e.target.value })}
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                   className="form-input"
                   style={{ paddingLeft: '0.9rem' }}
                 />
@@ -401,8 +488,8 @@ export default function Jogadores() {
                 <div className="form-group">
                   <label className="form-label">Posição Tática</label>
                   <select
-                    value={novoJogador.posicao}
-                    onChange={(e) => setNovoJogador({ ...novoJogador, posicao: e.target.value })}
+                    value={formData.posicao}
+                    onChange={(e) => setFormData({ ...formData, posicao: e.target.value })}
                     className="form-input"
                     style={{ paddingLeft: '0.9rem', backgroundColor: '#ffffff' }}
                   >
@@ -420,8 +507,8 @@ export default function Jogadores() {
                     min="1"
                     max="99"
                     placeholder="Ex: 10"
-                    value={novoJogador.numero_camisa}
-                    onChange={(e) => setNovoJogador({ ...novoJogador, numero_camisa: e.target.value })}
+                    value={formData.numero_camisa}
+                    onChange={(e) => setFormData({ ...formData, numero_camisa: e.target.value })}
                     className="form-input"
                     style={{ paddingLeft: '0.9rem' }}
                   />
@@ -435,8 +522,8 @@ export default function Jogadores() {
                     type="text"
                     required
                     placeholder="Ex: Brasil"
-                    value={novoJogador.nacionalidade}
-                    onChange={(e) => setNovoJogador({ ...novoJogador, nacionalidade: e.target.value })}
+                    value={formData.nacionalidade}
+                    onChange={(e) => setFormData({ ...formData, nacionalidade: e.target.value })}
                     className="form-input"
                     style={{ paddingLeft: '0.9rem' }}
                   />
@@ -447,8 +534,8 @@ export default function Jogadores() {
                   <input
                     type="date"
                     required
-                    value={novoJogador.data_nascimento}
-                    onChange={(e) => setNovoJogador({ ...novoJogador, data_nascimento: e.target.value })}
+                    value={formData.data_nascimento}
+                    onChange={(e) => setFormData({ ...formData, data_nascimento: e.target.value })}
                     className="form-input"
                     style={{ paddingLeft: '0.9rem' }}
                   />
@@ -460,8 +547,8 @@ export default function Jogadores() {
                 <input
                   type="number"
                   placeholder="Ex: 1 (deixe vazio se for sem clube)"
-                  value={novoJogador.time_id}
-                  onChange={(e) => setNovoJogador({ ...novoJogador, time_id: e.target.value })}
+                  value={formData.time_id}
+                  onChange={(e) => setFormData({ ...formData, time_id: e.target.value })}
                   className="form-input"
                   style={{ paddingLeft: '0.9rem' }}
                 />
@@ -476,7 +563,7 @@ export default function Jogadores() {
                   Cancelar
                 </button>
                 <button type="submit" className="btn-emerald" disabled={carregando}>
-                  <Check size={16} /> {carregando ? 'Cadastrando...' : 'Salvar no Elenco'}
+                  <Check size={16} /> {carregando ? 'Salvando...' : jogadorEmEdicao ? 'Salvar Alterações' : 'Salvar no Elenco'}
                 </button>
               </div>
             </form>

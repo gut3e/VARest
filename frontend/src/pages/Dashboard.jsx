@@ -5,17 +5,20 @@ import { Shield, Users, Calendar, Trophy, TrendingUp, Activity, ArrowUpRight, Za
 export default function Dashboard({ onNavegar, usuario }) {
   const [totalTimes, setTotalTimes] = useState(0);
   const [totalJogadores, setTotalJogadores] = useState(0);
+  const [totalConfrontos, setTotalConfrontos] = useState(0);
 
   useEffect(() => {
     async function carregarTotais() {
       try {
-        const [resTimes, resJogadores] = await Promise.all([
+        const [resTimes, resJogadores, resConfrontos] = await Promise.all([
           axios.get('http://localhost:3000/api/times'),
           axios.get('http://localhost:3000/api/players'),
+          axios.get('http://localhost:3000/api/matches'),
         ]);
 
         setTotalTimes(resTimes.data.length);
         setTotalJogadores(resJogadores.data.length);
+        setTotalConfrontos(resConfrontos.data.length);
       } catch (error) {
         console.error('Erro ao buscar totais do dashboard:', error);
       }
@@ -27,7 +30,7 @@ export default function Dashboard({ onNavegar, usuario }) {
   const kpis = [
     { label: 'Clubes Monitorados', valor: String(totalTimes), delta: `${totalTimes} cadastrados no banco`, icon: Shield, tab: 'times' },
     { label: 'Atletas no Radar', valor: String(totalJogadores), delta: `${totalJogadores} scoutings ativos`, icon: Users, tab: 'jogadores' },
-    { label: 'Confrontos Analisados', valor: '138', delta: '98.8% sem pendências', icon: Calendar, tab: 'partidas' },
+    { label: 'Confrontos Analisados', valor: String(totalConfrontos), delta: `${totalConfrontos}`, icon: Calendar, tab: 'partidas' },
     { label: 'Taças Registradas', valor: '42', delta: 'Histórico desde 1950', icon: Trophy, tab: 'titulos' },
   ];
 
