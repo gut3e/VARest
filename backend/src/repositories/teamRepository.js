@@ -30,4 +30,32 @@ async function listarTodos() {
     return result.rows;
 }
 
-module.exports = { inserirTime, buscarNomeOuSigla, listarTodos };
+async function excluirTime(id){
+    const sql = 
+    `
+        DELETE FROM times WHERE id = $1 RETURNING *
+    `
+
+    const result = await db.query(sql, [id]);
+    return result.rows[0];
+}
+
+async function temPartidas(id){
+    const sql = `
+        SELECT 1 FROM partidas 
+        WHERE time_mandante_id = $1 OR time_visitante_id = $1 
+        LIMIT 1
+    `;
+    const result = await db.query(sql, [id]);
+    return result.rowCount > 0;
+}
+
+async function buscarPorId(id){
+    const sql = `
+            SELECT * FROM times WHERE id = $1
+        `;
+        const result = await db.query(sql, [id]);
+        return result.rows[0];
+}
+
+module.exports = { inserirTime, buscarNomeOuSigla, listarTodos, buscarPorId, excluirTime, temPartidas };

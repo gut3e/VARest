@@ -13,4 +13,22 @@ async function listarTimes() {
     return await teamRepository.listarTodos();
 }
 
-module.exports = { criarTime, listarTimes };
+async function excluirTime(id){
+    const time = await teamRepository.buscarPorId(id);
+    if(!time){
+        const erro = new Error('Time não encontrado!');
+        erro.statusCode = 404;
+        throw erro;
+    }
+
+    const possuiPartidas = await teamRepository.temPartidas(id);
+    if (possuiPartidas) {
+        const erro = new Error('Não é possível excluir um time que possui partidas registradas!');
+        erro.statusCode = 400;
+        throw erro;
+    }
+
+    return await teamRepository.excluirTime(id);
+}
+
+module.exports = { criarTime, listarTimes, excluirTime };

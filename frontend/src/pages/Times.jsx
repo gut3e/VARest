@@ -80,9 +80,18 @@ export default function Times() {
     }
   }
 
-  function handleRemoverTime(id) {
-    if (confirm('Deseja realmente remover este clube do radar?')) {
+  async function handleRemoverTime(id) {
+    if (!window.confirm('Deseja realmente remover este clube do radar?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`http://localhost:3000/api/times/${id}`);
       setTimes(times.filter((t) => t.id !== id));
+      alert('Time excluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir time:', error);
+      alert(error.response?.data?.mensagem || 'Erro ao excluir time!');
     }
   }
 

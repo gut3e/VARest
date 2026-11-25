@@ -24,4 +24,15 @@ async function listar(req, res) {
     }
 }
 
-module.exports = { criar, listar }; 
+async function excluir(req,res){
+    const {id} = req.params;
+
+    try{
+        await teamService.excluirTime(id);
+        return res.status(200).json({mensagem: "Time excluido com sucesso!"});
+    }catch(error){
+        return res.status(error.statusCode || 400).json({ mensagem: error.message });    
+    }
+}
+
+module.exports = { criar, listar, excluir }; 
