@@ -59,7 +59,7 @@
         }
       }
     },
-    "/jogadores": {
+    "/players": {
       "get": {
         "tags": ["Jogadores"],
         "summary": "Listar jogadores",
@@ -106,7 +106,7 @@
         }
       }
     },
-    "/partidas": {
+    "/matches": {
       "get": {
         "tags": ["Partidas"],
         "summary": "Listar partidas",
